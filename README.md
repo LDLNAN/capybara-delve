@@ -24,6 +24,10 @@ npm run preview    # serves dist/ locally
 
 `dist/` is plain static files and can be hosted on any static web host. The game needs no backend, no API keys and no network access. All art, music and sound are generated procedurally at runtime.
 
+## Branch workflow
+
+Feature branches can be integrated into `develop` for batch testing. Stable changes go to `master`.
+
 ## How to play
 
 | Input | Action |
