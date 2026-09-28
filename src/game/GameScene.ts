@@ -78,6 +78,7 @@ export class GameScene extends Phaser.Scene implements GameAPI {
   bossDead = false;
   waveT = 30;
   floorT = 0;
+  ambientT = 0;
   perkQueue: Capy[] = [];
   wavesThisFloor = 0;
   hudT = 0;
@@ -130,6 +131,7 @@ export class GameScene extends Phaser.Scene implements GameAPI {
     this.perkQueue = [];
     this.lastLeader = null;
     this.gemCombo = 0;
+    this.ambientT = 0;
   }
 
   get leader(): Capy | null {
@@ -721,6 +723,7 @@ export class GameScene extends Phaser.Scene implements GameAPI {
     this.updateGems(dt);
     this.updateDrops(dt);
     this.updateProps(dt);
+    this.updateAmbient(dt);
     this.updateTeles(dt);
     this.updateWaves(dt);
     this.fx.update(dt);
@@ -1848,6 +1851,12 @@ export class GameScene extends Phaser.Scene implements GameAPI {
       if (e.boss.id === 'lich') oy = -10 + w * 5;
       oy -= e.hgt;
     }
+    // A brief squash makes contact readable even when damage numbers are off.
+    if (e.flash > 0) {
+      const impact = Math.min(1, e.flash / 0.09);
+      sx *= 1 + impact * 0.11;
+      sy *= 1 - impact * 0.09;
+    }
     e.spr.setPosition(e.x, e.y + oy).setScale(sx, sy).setDepth(D.entity + e.y / 100 + (def?.kind === 'flyer' ? 2 : 0));
     e.shadow.setPosition(e.x, e.y + 1);
     if (e.flash > 0) e.spr.setTintFill(0xffffff);
@@ -2391,6 +2400,10 @@ export class GameScene extends Phaser.Scene implements GameAPI {
         case 'cage':
         case 'campfire':
         case 'barrelcapy':
+          if (p.kind === 'campfire') {
+            const glow = Math.sin(this.floorT * 8 + p.x * 0.03) * 0.025;
+            p.spr.setScale(0.6 + glow, 0.6 - glow * 0.5);
+          }
           if (p.recruit && !p.used && p.kind === 'barrelcapy') {
             const w = (this.floorT + p.x * 0.01) % 2.4;
             p.spr.setRotation(w < 0.5 ? Math.sin(w * 40) * 0.12 * (1 - w * 2) : 0);
@@ -2420,6 +2433,10 @@ export class GameScene extends Phaser.Scene implements GameAPI {
           if (L && !this.transitioning && !this.ended && dist2(L.x, L.y, p.x, p.y) < 40 * 40) this.descend(p);
           break;
         case 'spring':
+          if ((p.pool ?? 0) > 0) {
+            const ripple = Math.sin(this.floorT * 2.7 + p.x * 0.01) * 0.012;
+            p.spr.setScale(0.62 + ripple, 0.62 - ripple * 0.45);
+          }
           if (Math.random() < dt * 4) this.fx.burst(this.fx.smoke, 1, p.x + rng.range(-70, 70), p.y + rng.range(-30, 20), 0xe0f0ff);
           if ((p.pool ?? 0) > 0) {
             for (const c of alive) {
@@ -2443,6 +2460,28 @@ export class GameScene extends Phaser.Scene implements GameAPI {
             }
           }
           break;
+      }
+    }
+  }
+
+  updateAmbient(dt: number) {
+    this.ambientT -= dt;
+    if (this.ambientT > 0) return;
+    this.ambientT = 0.12;
+    const view = this.cameras.main.worldView;
+    const visible = (x: number, y: number) => x > view.left - 80 && x < view.right + 80 && y > view.top - 80 && y < view.bottom + 80;
+    for (const torch of this.torches) {
+      if (torch.phase < 0 || !visible(torch.x, torch.y) || rng.next() > 0.22) continue;
+      this.fx.burst(this.fx.embers, 1, torch.x + rng.range(-3, 3), torch.y - 8, 0xffb35a);
+    }
+    for (const prop of this.props) {
+      if (prop.used || !visible(prop.x, prop.y)) continue;
+      if (prop.kind === 'campfire' && rng.next() < 0.68) {
+        this.fx.burst(this.fx.embers, 1, prop.x + rng.range(-12, 12), prop.y - 17, 0xffb35a);
+      } else if (prop.kind === 'spring' && (prop.pool ?? 0) > 0 && rng.next() < 0.26) {
+        this.fx.burst(this.fx.stars, 1, prop.x + rng.range(-48, 48), prop.y + rng.range(-18, 15), 0x9aeaff);
+      } else if (prop.kind === 'chest_gold' && rng.next() < 0.16) {
+        this.fx.burst(this.fx.stars, 1, prop.x + rng.range(-13, 13), prop.y - rng.range(8, 28), 0xffe48a);
       }
     }
   }

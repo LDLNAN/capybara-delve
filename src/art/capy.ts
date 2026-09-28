@@ -54,6 +54,11 @@ function body(g: G, pal: FurPal) {
   g.globalAlpha = 0.55;
   g.fill();
   g.globalAlpha = 1;
+  // A soft ridge catches the light without flattening the round silhouette.
+  g.beginPath();
+  g.moveTo(12, 26);
+  g.quadraticCurveTo(24, 20, 34, 23);
+  stroke(g, 1.2, shade(pal.light, 0.2));
   // fur tufts
   g.strokeStyle = pal.dark;
   g.lineWidth = 0.9;
@@ -100,6 +105,18 @@ function head(g: G, pal: FurPal, face: 'open' | 'blink' | 'hurt') {
   g.globalAlpha = 0.28;
   g.fill();
   g.globalAlpha = 1;
+  // The muzzle and whiskers stay visible at the game's small display scale.
+  ell(g, 57.2, 27.2, 2.7, 1.2);
+  g.fillStyle = shade(pal.light, 0.16);
+  g.globalAlpha = 0.55;
+  g.fill();
+  g.globalAlpha = 1;
+  g.beginPath();
+  g.moveTo(58.5, 25.3);
+  g.lineTo(63.5, 24.4);
+  g.moveTo(58.5, 27.1);
+  g.lineTo(64, 27.7);
+  stroke(g, 0.55, shade(pal.dark, -0.15));
   // blush
   ell(g, 52.5, 25.5, 3.3, 2.1);
   g.fillStyle = 'rgba(238,120,110,0.45)';
@@ -553,6 +570,9 @@ export function drawCapy(g: G, o: CapyDrawOpts) {
   legs(g, o.pal, o.frame);
   body(g, o.pal);
   if (o.cls) gearFront(g, o.cls, o.frame);
+  // A one-pixel head nod gives the four walk cells their own silhouette.
+  const nod = o.frame < 4 ? [0, -1, 0, 1][o.frame] : 0;
+  g.translate(0, nod);
   if (o.cls !== 'vanguard' && o.cls !== 'ranger') ear(g, o.pal);
   head(g, o.pal, face);
   if (o.cls) gearHead(g, o.cls, o.frame);
