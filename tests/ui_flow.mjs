@@ -18,14 +18,36 @@ await p.evaluate(() => {
   const L = g.leader;
   for (let i = 0; i < 4; i++) g.dropItem(window.__makeItem({ depth: 3, rarity: i + 1, cls: 'ranger' }), L.x + 30, L.y);
 });
-await p.waitForTimeout(3000);
+await p.waitForFunction(() => window.__game.drops.length >= 4 && window.__game.drops.every((d) => d.ready), null, { timeout: 5000 });
+ok((await p.evaluate(() => window.__game.bag.length)) === 0, 'ground loot waits for manual pickup');
+await p.evaluate(() => { const g = window.__game; g.leader.x += 1000; g.leader.y += 1000; });
+await p.keyboard.press('e');
+ok((await p.evaluate(() => window.__game.bag.length)) === 0, 'pickup requires being nearby');
+for (let i = 0; i < 4; i++) {
+  await p.evaluate(() => {
+    const g = window.__game, d = g.drops.find((drop) => drop.t >= 0);
+    g.leader.x = d.x; g.leader.y = d.y;
+  });
+  await p.keyboard.press('e');
+}
 const bagN = await p.evaluate(() => window.__game.bag.length);
-ok(bagN >= 3, 'items picked up into bag: ' + bagN);
+ok(bagN === 4, 'items picked up manually into bag: ' + bagN);
 await p.keyboard.press('i');
 await p.waitForSelector('.baggrid .slot', { timeout: 5000 });
 await p.waitForTimeout(300);
 ok(await p.evaluate(() => window.__game.paused), 'inventory pauses game');
-await p.click('.baggrid .slot');
+ok((await p.locator('.baggrid .slot').count()) === 36, 'bag has fixed slots');
+ok((await p.locator('.inv-top .auto').count()) === 0, 'auto equip removed');
+const movedUid = await p.evaluate(() => window.__game.bag.find((it) => it.bagSlot === 0).uid);
+await p.locator('.baggrid .slot').first().dragTo(p.locator('.baggrid .slot').last());
+ok(await p.evaluate((uid) => window.__game.bag.find((it) => it.uid === uid).bagSlot === 35, movedUid), 'drag moves an item to an empty slot');
+const swapped = await p.evaluate(() => window.__game.bag.find((it) => it.bagSlot === 1).uid);
+await p.locator('.baggrid .slot').nth(1).dragTo(p.locator('.baggrid .slot').nth(2));
+ok(await p.evaluate((uid) => window.__game.bag.find((it) => it.uid === uid).bagSlot === 2, swapped), 'drag swaps occupied slots');
+await p.locator('.baggrid .slot').nth(2).click();
+await p.locator('.baggrid .slot').nth(30).click();
+ok(await p.evaluate((uid) => window.__game.bag.find((it) => it.uid === uid).bagSlot === 30, swapped), 'click moves selected item to an empty slot');
+await p.click('.baggrid .slot.r1');
 await p.waitForTimeout(200);
 await p.screenshot({ path: 'tests/shots/ui_inventory.png' });
 const before = await p.evaluate(() => window.__game.leader.equip.weapon?.name);
@@ -34,8 +56,6 @@ if (btn) await btn.click();
 await p.waitForTimeout(200);
 const after = await p.evaluate(() => window.__game.leader.equip);
 ok(true, `equip via detail panel: weapon ${before} -> ${after.weapon?.name}, armor ${after.armor?.name}, trinket ${after.trinket?.name}`);
-await p.click('.inv-top .auto');
-await p.waitForTimeout(200);
 await p.screenshot({ path: 'tests/shots/ui_inventory2.png' });
 await p.keyboard.press('Escape');
 await p.waitForTimeout(300);

@@ -15,7 +15,7 @@ export interface GameAPI {
   equip(c: Capy, it: Item): void;
   unequip(c: Capy, slot: Slot): void;
   salvage(it: Item): void;
-  autoEquip(): void;
+  moveBagItem(it: Item, slot: number): void;
   salvageCommons(): number;
   pauseGame(): void;
   resumeGame(): void;
@@ -137,7 +137,7 @@ class UIManager {
         <div class="name-box">Your capybara: <b class="nm"></b><button class="btn small alt reroll" title="New name">↻</button></div>
         <button class="btn big go">BEGIN THE DELVE</button>
       </div>
-      <div class="title-controls"><span class="kbd">WASD</span>/<span class="kbd">Arrows</span> move · attacks are automatic · <span class="kbd">I</span> bag · <span class="kbd">Esc</span> pause · <span class="kbd">F</span> fullscreen</div>
+      <div class="title-controls"><span class="kbd">WASD</span>/<span class="kbd">Arrows</span> move · attacks are automatic · <span class="kbd">E</span> pick up loot · <span class="kbd">I</span> bag · <span class="kbd">Esc</span> pause · <span class="kbd">F</span> fullscreen</div>
       <div class="title-foot">Find friends. Grab loot. Go deeper. Everybody is a capybara.</div>
     </div>`);
     const row = el.querySelector('.class-row')!;
@@ -384,7 +384,7 @@ class UIManager {
       <div class="set"></div>
       <button class="btn alt restart">Restart Run</button>
       <button class="btn alt menu">Main Menu</button>
-      <div class="title-controls"><span class="kbd">WASD</span> move · <span class="kbd">I</span>/<span class="kbd">Tab</span> bag · <span class="kbd">Esc</span> resume</div>
+      <div class="title-controls"><span class="kbd">WASD</span> move · <span class="kbd">E</span> pick up loot · <span class="kbd">I</span>/<span class="kbd">Tab</span> bag · <span class="kbd">Esc</span> resume</div>
     </div></div>`);
     el.querySelector('.set')!.appendChild(this.settingsBlock());
     const resume = () => {
@@ -426,7 +426,7 @@ class UIManager {
     if (!this.invFocus || !this.invFocus.alive || !g.party.includes(this.invFocus)) this.invFocus = living[0] ?? null;
     this.invSel = null;
     const el = $(`<div class="modal panel"><h2>Party &amp; Bag</h2><button class="btn small alt x">✕ Close</button>
-      <div class="inv-top"><button class="btn small auto">✦ Auto-Equip Best</button><button class="btn small alt junk">Salvage all Common</button><span class="title-controls">Click an item, then pick who gets it.</span></div>
+      <div class="inv-top"><button class="btn small alt junk">Salvage all Common</button><span class="title-controls">Drag items to arrange your bag, or select one and click an empty space. Click to equip.</span></div>
       <div class="inv"><div class="col-party"><h3>Party</h3><div class="plist"></div></div>
       <div class="col-bag"><h3>Bag <span class="bagn"></span></h3><div class="baggrid"></div></div>
       <div class="col-detail"><h3>Details</h3><div class="detail"></div></div></div></div>`);
@@ -443,13 +443,6 @@ class UIManager {
       this.invSel = null;
       render();
     });
-    el.querySelector('.auto')!.addEventListener('click', () => {
-      g.autoEquip();
-      audio.play('perk');
-      this.invSel = null;
-      render();
-    });
-
     const itemSlot = (it: Item | null, label: string, extra = '') => {
       if (!it) return `<div class="slot empty" data-label="${label}"></div>`;
       return `<div class="slot r${it.rarity} ${extra}" title="${esc(it.name)}"><img src="${iconURL(it.icon)}">${it.isNew ? '<span class="new">NEW</span>' : ''}</div>`;
@@ -518,11 +511,37 @@ class UIManager {
       el.querySelector('.bagn')!.textContent = `(${g.bag.length}/${BAG_SIZE})`;
       const grid = el.querySelector('.baggrid')!;
       grid.innerHTML = '';
-      if (!g.bag.length) grid.appendChild($(`<div class="emptyhint" style="grid-column:1/-1">Your bag is empty.<br>Smash things. Open chests. Defeat monsters.</div>`));
-      const sorted = [...g.bag].sort((a, b) => b.rarity - a.rarity || SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot));
-      for (const it of sorted) {
+      for (let slot = 0; slot < BAG_SIZE; slot++) {
+        const it = g.bag.find((item) => item.bagSlot === slot);
+        if (!it) {
+          const empty = $(itemSlot(null, ''));
+          empty.dataset.slot = String(slot);
+          empty.addEventListener('click', () => {
+            if (this.invSel && !this.invSel.owner) {
+              g.moveBagItem(this.invSel.item, slot);
+              audio.play('click');
+              render();
+            }
+          });
+          empty.addEventListener('dragover', (e) => e.preventDefault());
+          empty.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const moved = g.bag.find((item) => item.uid === Number(e.dataTransfer?.getData('text/plain')));
+            if (moved) { g.moveBagItem(moved, slot); render(); }
+          });
+          grid.appendChild(empty);
+          continue;
+        }
         const up = bestUpgradeFor(it);
         const node = $(itemSlot(it, '', this.invSel && this.invSel.item === it ? 'pick' : ''));
+        node.draggable = true;
+        node.addEventListener('dragstart', (e) => e.dataTransfer?.setData('text/plain', String(it.uid)));
+        node.addEventListener('dragover', (e) => e.preventDefault());
+        node.addEventListener('drop', (e) => {
+          e.preventDefault();
+          const moved = g.bag.find((item) => item.uid === Number(e.dataTransfer?.getData('text/plain')));
+          if (moved) { g.moveBagItem(moved, slot); render(); }
+        });
         if (up) node.appendChild($(`<span class="upg">▲</span>`));
         if (this.invFocus && !canEquip(it, this.invFocus.cls)) node.appendChild($(`<span class="lock"></span>`));
         node.addEventListener('click', () => {

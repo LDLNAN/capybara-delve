@@ -30,6 +30,7 @@ npm run preview    # serves dist/ locally
 | --- | --- |
 | **WASD** / **Arrow keys** | Move your lead capybara |
 | **I**, **Tab** or **B** | Open the party & bag screen (pauses the game) |
+| **E** or click nearby loot | Pick up one item from the ground |
 | **Esc** / **P** | Pause menu (volume, screen shake, restart, main menu) |
 | **F** | Toggle fullscreen |
 | **M** | Mute |
@@ -44,7 +45,7 @@ npm run preview    # serves dist/ locally
   - **Embermancer**: exploding fireballs that set enemies on fire.
   - **Herbalist**: wears an orange and heals the party with periodic pulses.
   - **Stormrunner**: dashes in and hits with chain lightning.
-- **Loot** drops from enemies, chests, pots and bosses in five rarities, from Common to Legendary. Open the bag with **I**. A green ▲ marks an upgrade, and **Auto-Equip Best** handles the details if you'd rather not. You can salvage unwanted items for XP.
+- **Loot** drops from enemies, chests, pots and bosses in five rarities, from Common to Legendary. Stand near an item and press **E** or click it to pick it up. Open the bag with **I**; drag items to rearrange them, or select one and click an empty slot. A green ▲ marks an upgrade. Equip items yourself or salvage unwanted ones for XP.
 - **Levels:** XP gems are shared by the whole party. Every 3rd level, a capybara picks a talent.
 - **Floors:** find the stairs on each floor to go deeper. Every 3rd depth has a **boss lair**. Beat the boss to open a portal. Floors get harder the deeper you go, and reinforcements keep arriving the longer you stay on one.
 - **Hot springs** heal your party. Capybaras love hot springs.

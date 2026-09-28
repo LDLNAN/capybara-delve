@@ -29,6 +29,7 @@ export interface Item {
   legendDesc?: string;
   flavor?: string;
   isNew?: boolean;
+  bagSlot?: number;
 }
 
 let uidCounter = 1;
