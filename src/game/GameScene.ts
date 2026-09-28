@@ -12,7 +12,7 @@ import {
 import { Dungeon, FLOOR, generateDungeon, isSolid, Room, TILE } from '../dungeon';
 import { canEquip, Item, makeItem, makeStarterWeapon, RARITY_COLORS, RARITY_HEX, rollRarity, Slot, SLOTS } from '../items';
 import { clamp, dist2, rng, RNG } from '../rng';
-import { computeStats, powerScore, xpToNext } from '../stats';
+import { computeStats, xpToNext } from '../stats';
 import { deltaPower, GameAPI, loadBest, saveBest, settings, toggleFullscreen, UI } from '../ui/ui';
 import { updateBoss } from './boss';
 import { D, FX } from './fx';
@@ -161,6 +161,7 @@ export class GameScene extends Phaser.Scene implements GameAPI {
       if (this.ended || this.transitioning) return;
       if (k === 'escape' || k === 'p') this.openPause();
       else if (k === 'i' || k === 'tab' || k === 'b') this.openBag();
+      else if (k === 'e' && !e.repeat) this.pickupNearestDrop();
       else if (k === 'f') toggleFullscreen();
       else if (k === 'm') {
         audio.muted = !audio.muted;
@@ -1721,7 +1722,7 @@ export class GameScene extends Phaser.Scene implements GameAPI {
       const it = c.equip[sl];
       if (!it) continue;
       c.equip[sl] = null;
-      if (this.bag.length < BAG_MAX) this.bag.push(it);
+      if (this.bag.length < BAG_MAX) this.addToBag(it);
       else this.dropItem(it, c.x, c.y);
     }
     this.perkQueue = this.perkQueue.filter((q) => q !== c);
@@ -2205,6 +2206,7 @@ export class GameScene extends Phaser.Scene implements GameAPI {
 
   // ------------------------------------------------------------------ items
   dropItem(it: Item, x: number, y: number) {
+    it.bagSlot = undefined;
     const a = rng.range(0, Math.PI * 2),
       dist = rng.range(24, 60);
     let tx = x + Math.cos(a) * dist,
@@ -2215,13 +2217,14 @@ export class GameScene extends Phaser.Scene implements GameAPI {
     }
     const col = RARITY_HEX[it.rarity];
     const glow = this.add.image(x, y, 'soft').setTint(col).setBlendMode(Phaser.BlendModes.ADD).setDepth(D.pickup - 0.5).setScale(0.9).setAlpha(0.7);
-    const spr = this.add.image(x, y, 'icon_' + it.icon).setScale(0.42).setDepth(D.proj - 1);
+    const spr = this.add.image(x, y, 'icon_' + it.icon).setScale(0.42).setDepth(D.proj - 1).setInteractive();
     let beam: Phaser.GameObjects.Image | null = null;
     if (it.rarity >= 2) {
       beam = this.add.image(tx, ty - 60, 'soft').setTint(col).setBlendMode(Phaser.BlendModes.ADD).setDepth(D.fxTop - 1).setScale(0.35, 3.2).setAlpha(0);
       this.tweens.add({ targets: beam, alpha: 0.55, duration: 400, delay: 350 });
     }
     const d: ItemDrop = { item: it, x: tx, y: ty, spr, glow, beam, t: 0, ready: false };
+    spr.on('pointerdown', () => this.tryPickupDrop(d));
     this.drops.push(d);
     const o = { k: 0 };
     this.tweens.add({
@@ -2246,35 +2249,56 @@ export class GameScene extends Phaser.Scene implements GameAPI {
   }
 
   updateDrops(dt: number) {
-    const alive = this.alive;
     for (const d of this.drops) {
       d.t += dt;
       if (!d.ready) continue;
       d.spr.setPosition(d.x, d.y - 10 + Math.sin(d.t * 3) * 3);
       d.glow.setPosition(d.x, d.y - 6).setScale(0.8 + Math.sin(d.t * 4) * 0.12);
       if (d.beam) d.beam.setPosition(d.x, d.y - 70);
-      for (const c of alive) {
-        const dd = dist2(c.x, c.y, d.x, d.y);
-        if (dd < 110 * 110 && dd > 30 * 30 && this.bag.length < BAG_MAX) {
-          const l = Math.sqrt(dd);
-          d.x += ((c.x - d.x) / l) * 320 * dt;
-          d.y += ((c.y - d.y) / l) * 320 * dt;
-        }
-        if (dd < 40 * 40) {
-          if (this.bag.length >= BAG_MAX) {
-            if (this.bagFullT < this.stats.time) {
-              this.bagFullT = this.stats.time + 4;
-              UI.toast('Bag full! Press <span class="kbd">I</span> to salvage or equip.', undefined, 3, '#a03030');
-              audio.play('deny');
-            }
-            break;
-          }
-          this.pickupItem(d);
-          break;
-        }
-      }
     }
     this.drops = this.drops.filter((d) => d.t >= 0);
+  }
+
+  pickupNearestDrop() {
+    const nearby = this.drops.filter((d) => d.ready && d.t >= 0 && this.alive.some((c) => dist2(c.x, c.y, d.x, d.y) < 75 * 75));
+    nearby.sort((a, b) => {
+      const lead = this.leader!;
+      return dist2(lead.x, lead.y, a.x, a.y) - dist2(lead.x, lead.y, b.x, b.y);
+    });
+    if (nearby[0]) this.tryPickupDrop(nearby[0]);
+  }
+
+  tryPickupDrop(d: ItemDrop) {
+    if (!d.ready || d.t < 0 || this.paused || this.ended || this.transitioning) return;
+    if (!this.alive.some((c) => dist2(c.x, c.y, d.x, d.y) < 75 * 75)) return;
+    if (this.bag.length >= BAG_MAX) {
+      if (this.bagFullT < this.stats.time) {
+        this.bagFullT = this.stats.time + 4;
+        UI.toast('Bag full! Press <span class="kbd">I</span> to salvage or equip.', undefined, 3, '#a03030');
+        audio.play('deny');
+      }
+      return;
+    }
+    this.pickupItem(d);
+  }
+
+  addToBag(it: Item) {
+    const used = new Set(this.bag.map((item) => item.bagSlot));
+    for (let slot = 0; slot < BAG_MAX; slot++) {
+      if (!used.has(slot)) {
+        it.bagSlot = slot;
+        this.bag.push(it);
+        return;
+      }
+    }
+  }
+
+  moveBagItem(it: Item, slot: number) {
+    if (!this.bag.includes(it) || !Number.isInteger(slot) || slot < 0 || slot >= BAG_MAX) return;
+    const other = this.bag.find((item) => item.bagSlot === slot);
+    if (other === it) return;
+    if (other) other.bagSlot = it.bagSlot;
+    it.bagSlot = slot;
   }
 
   pickupItem(d: ItemDrop) {
@@ -2284,7 +2308,7 @@ export class GameScene extends Phaser.Scene implements GameAPI {
     d.beam?.destroy();
     const it = d.item;
     it.isNew = true;
-    this.bag.push(it);
+    this.addToBag(it);
     this.stats.itemsFound++;
     if (it.rarity >= 2) this.stats.notable.push(it);
     let up = '';
@@ -2310,7 +2334,11 @@ export class GameScene extends Phaser.Scene implements GameAPI {
     const old = c.equip[it.slot];
     c.equip[it.slot] = it;
     it.isNew = false;
-    if (old) this.bag.push(old);
+    if (old) {
+      old.bagSlot = it.bagSlot;
+      this.bag.push(old);
+    }
+    it.bagSlot = undefined;
     this.refreshStats(c);
   }
 
@@ -2318,7 +2346,7 @@ export class GameScene extends Phaser.Scene implements GameAPI {
     const it = c.equip[slot];
     if (!it || this.bag.length >= BAG_MAX) return;
     c.equip[slot] = null;
-    this.bag.push(it);
+    this.addToBag(it);
     this.refreshStats(c);
   }
 
@@ -2327,26 +2355,6 @@ export class GameScene extends Phaser.Scene implements GameAPI {
     if (i < 0) return;
     this.bag.splice(i, 1);
     this.gainXp((3 + it.ilvl * 2) * (1 + it.rarity * 1.2));
-  }
-
-  autoEquip() {
-    for (let pass = 0; pass < 2; pass++)
-      for (const c of this.alive) {
-        for (const slot of SLOTS) {
-          let best: Item | null = null;
-          let bestScore = powerScore(c.cls, c.stats) + 0.01;
-          for (const it of this.bag) {
-            if (it.slot !== slot || !canEquip(it, c.cls)) continue;
-            const eq = { ...c.equip, [slot]: it };
-            const sc = powerScore(c.cls, computeStats({ cls: c.cls, level: c.level, perks: c.perks, equip: eq }));
-            if (sc > bestScore) {
-              bestScore = sc;
-              best = it;
-            }
-          }
-          if (best) this.equip(c, best);
-        }
-      }
   }
 
   hasUpgrade(): boolean {

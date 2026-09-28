@@ -54,8 +54,7 @@ await p.evaluate(({ god }) => {
     }
     const L = g.leader;
     if (window.__bot.god) for (const c of g.party) { if (c.alive) c.hp = Math.max(c.hp, c.stats.maxHp * 0.6); }
-    // occasionally auto equip
-    if (Math.random() < 0.02 && g.bag.length) g.autoEquip();
+    if (g.drops.some((d) => d.ready && d.t >= 0)) g.pickupNearestDrop();
     const T = 64;
     const enemies = g.enemies.filter((e) => !e.dead && e.awake && e.state !== 'hidden');
     let near = null, nd = 1e9;
