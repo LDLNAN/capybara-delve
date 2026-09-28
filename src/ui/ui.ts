@@ -14,9 +14,8 @@ export interface GameAPI {
   stats: RunStats;
   equip(c: Capy, it: Item): void;
   unequip(c: Capy, slot: Slot): void;
-  salvage(it: Item): void;
+  discardItem(it: Item): void;
   autoEquip(): void;
-  salvageCommons(): number;
   pauseGame(): void;
   resumeGame(): void;
   restartRun(): void;
@@ -426,7 +425,7 @@ class UIManager {
     if (!this.invFocus || !this.invFocus.alive || !g.party.includes(this.invFocus)) this.invFocus = living[0] ?? null;
     this.invSel = null;
     const el = $(`<div class="modal panel"><h2>Party &amp; Bag</h2><button class="btn small alt x">✕ Close</button>
-      <div class="inv-top"><button class="btn small auto">✦ Auto-Equip Best</button><button class="btn small alt junk">Salvage all Common</button><span class="title-controls">Click an item, then pick who gets it.</span></div>
+      <div class="inv-top"><button class="btn small auto">✦ Auto-Equip Best</button><span class="title-controls">Click an item, then pick who gets it.</span></div>
       <div class="inv"><div class="col-party"><h3>Party</h3><div class="plist"></div></div>
       <div class="col-bag"><h3>Bag <span class="bagn"></span></h3><div class="baggrid"></div></div>
       <div class="col-detail"><h3>Details</h3><div class="detail"></div></div></div></div>`);
@@ -437,12 +436,6 @@ class UIManager {
       g.resumeGame();
     };
     el.querySelector('.x')!.addEventListener('click', close);
-    el.querySelector('.junk')!.addEventListener('click', () => {
-      const n = g.salvageCommons();
-      audio.play(n ? 'break' : 'deny');
-      this.invSel = null;
-      render();
-    });
     el.querySelector('.auto')!.addEventListener('click', () => {
       g.autoEquip();
       audio.play('perk');
@@ -594,14 +587,14 @@ class UIManager {
           });
           who.appendChild(row);
         }
-        const sv = $(`<button class="btn small alt">Salvage (+XP)</button>`);
-        sv.addEventListener('click', () => {
-          g.salvage(it);
+        const discard = $(`<button class="btn small alt">Discard</button>`);
+        discard.addEventListener('click', () => {
+          g.discardItem(it);
           audio.play('break');
           this.invSel = null;
           render();
         });
-        acts.appendChild(sv);
+        acts.appendChild(discard);
       }
       det.appendChild(d);
     };
