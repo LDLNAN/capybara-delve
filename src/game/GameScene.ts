@@ -10,7 +10,7 @@ import {
   ENEMIES, EnemyId, FLOOR_FLAVOR, isBossDepth, PERKS, randomName,
 } from '../data';
 import { Dungeon, FLOOR, generateDungeon, isSolid, Room, TILE } from '../dungeon';
-import { canEquip, Item, makeItem, makeStarterWeapon, RARITY_COLORS, RARITY_HEX, Slot, SLOTS } from '../items';
+import { canEquip, Item, makeItem, makeStarterWeapon, RARITY_COLORS, RARITY_HEX, rollRarity, Slot, SLOTS } from '../items';
 import { clamp, dist2, rng, RNG } from '../rng';
 import { computeStats, powerScore, xpToNext } from '../stats';
 import { deltaPower, GameAPI, loadBest, saveBest, settings, toggleFullscreen, UI } from '../ui/ui';
@@ -508,6 +508,24 @@ export class GameScene extends Phaser.Scene implements GameAPI {
         this.addProp(gold ? 'chest_gold' : 'chest', cx, cy);
         occ.add(room.cy * this.dun.w + room.cx);
         this.spawnGroup(room, budgetBase * 0.7, occ);
+        break;
+      }
+      case 'armory': {
+        const wearer = rng.pick(this.alive);
+        this.addProp('chest', cx, cy, { lootSlot: 'weapon', lootClass: wearer.cls, minRarity: depth >= 4 ? 2 : 1 });
+        occ.add(room.cy * this.dun.w + room.cx);
+        this.spawnGroup(room, budgetBase * 0.6, occ);
+        break;
+      }
+      case 'gauntlet': {
+        this.addProp('chest_gold', cx, cy);
+        occ.add(room.cy * this.dun.w + room.cx);
+        const spot = this.roomSpot(room, occ, 2);
+        if (spot) {
+          const avail = (Object.keys(ENEMIES) as EnemyId[]).filter((id) => ENEMIES[id].minDepth <= depth && ENEMIES[id].weight > 0 && ENEMIES[id].kind !== 'turret');
+          this.spawnEnemy(rng.pick(avail), spot.x, spot.y, { elite: rng.pick(ELITE_MODS).id, room: room.id });
+        }
+        this.spawnGroup(room, budgetBase * 0.35, occ);
         break;
       }
       case 'recruit': {
@@ -2460,7 +2478,10 @@ export class GameScene extends Phaser.Scene implements GameAPI {
     const n = gold ? 3 : rng.int(1, 2);
     for (let i = 0; i < n; i++) {
       this.time.delayedCall(120 + i * 160, () => {
-        if (!this.transitioning) this.dropItem(makeItem({ depth: this.depth, rarityBonus: gold ? 1.1 : 0.4 }), p.x, p.y - 10);
+        if (!this.transitioning) {
+          const rarity = p.minRarity === undefined ? undefined : Math.max(p.minRarity, rollRarity(this.depth, 0.4));
+          this.dropItem(makeItem({ depth: this.depth, rarity, slot: p.lootSlot, cls: p.lootClass, rarityBonus: gold ? 1.1 : 0.4 }), p.x, p.y - 10);
+        }
       });
     }
     this.dropGems(p.x, p.y, 6 + this.depth * 3);

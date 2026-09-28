@@ -162,6 +162,9 @@ export interface Prop {
   recruit?: { cls: ClassId; name: string; fur: number; intro: string; spr: Phaser.GameObjects.Sprite };
   light?: { r: number; color: number; flicker: number };
   pool?: number;
+  lootSlot?: Slot;
+  lootClass?: ClassId;
+  minRarity?: number;
 }
 
 export interface Telegraph {
