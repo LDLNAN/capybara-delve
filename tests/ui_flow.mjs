@@ -50,6 +50,12 @@ ok(await p.evaluate((uid) => window.__game.bag.find((it) => it.uid === uid).bagS
 await p.click('.baggrid .slot.r1');
 await p.waitForTimeout(200);
 await p.screenshot({ path: 'tests/shots/ui_inventory.png' });
+const beforeDiscard = await p.evaluate(() => ({ bag: window.__game.bag.length, xp: window.__game.leader.xp, level: window.__game.leader.level }));
+await p.click('.detail .acts button');
+const afterDiscard = await p.evaluate(() => ({ bag: window.__game.bag.length, xp: window.__game.leader.xp, level: window.__game.leader.level }));
+ok(afterDiscard.bag === beforeDiscard.bag - 1 && afterDiscard.xp === beforeDiscard.xp && afterDiscard.level === beforeDiscard.level,
+  'discard frees one bag slot without granting XP');
+await p.click('.baggrid .slot:not(.empty)');
 const before = await p.evaluate(() => window.__game.leader.equip.weapon?.name);
 const btn = await p.$('.detail .cmp button:not([disabled])');
 if (btn) await btn.click();

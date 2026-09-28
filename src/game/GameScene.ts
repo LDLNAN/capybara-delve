@@ -2274,7 +2274,7 @@ export class GameScene extends Phaser.Scene implements GameAPI {
     if (this.bag.length >= BAG_MAX) {
       if (this.bagFullT < this.stats.time) {
         this.bagFullT = this.stats.time + 4;
-        UI.toast('Bag full! Press <span class="kbd">I</span> to salvage or equip.', undefined, 3, '#a03030');
+        UI.toast('Bag full! Press <span class="kbd">I</span> to equip or discard an item.', undefined, 3, '#a03030');
         audio.play('deny');
       }
       return;
@@ -2350,11 +2350,10 @@ export class GameScene extends Phaser.Scene implements GameAPI {
     this.refreshStats(c);
   }
 
-  salvage(it: Item) {
+  discardItem(it: Item) {
     const i = this.bag.indexOf(it);
     if (i < 0) return;
     this.bag.splice(i, 1);
-    this.gainXp((3 + it.ilvl * 2) * (1 + it.rarity * 1.2));
   }
 
   hasUpgrade(): boolean {
@@ -2896,12 +2895,6 @@ export class GameScene extends Phaser.Scene implements GameAPI {
   debugJump(depth: number) {
     this.depth = depth;
     this.buildFloor();
-  }
-
-  salvageCommons() {
-    const junk = this.bag.filter((it) => it.rarity === 0);
-    for (const it of junk) this.salvage(it);
-    return junk.length;
   }
 
   // ------------------------------------------------------------------ menus / flow
