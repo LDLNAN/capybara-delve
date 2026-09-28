@@ -52,6 +52,8 @@ Feature branches can be integrated into `develop` for batch testing. Stable chan
 - **Levels:** XP gems are shared by the whole party. Every 3rd level, a capybara picks a talent.
 - **Floors:** find the stairs on each floor to go deeper. Every 3rd depth has a **boss lair**. Beat the boss to open a portal. Floors get harder the deeper you go, and reinforcements keep arriving the longer you stay on one.
 - **Hot springs** heal your party. Capybaras love hot springs.
+- **Armories** appear from depth 2 and hold a chest with a weapon for one of your living capybaras. From depth 4, that weapon is at least Rare.
+- **Gauntlets** appear deeper down. Defeat or evade an elite guard to claim a golden chest.
 - **Death is permanent.** A fallen capybara is gone for the rest of the run, but their gear goes back into the bag. When the whole party falls, the run ends and you get a summary.
 
 Settings and your best run are saved in the browser's localStorage. Runs themselves are never saved.

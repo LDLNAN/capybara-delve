@@ -6,7 +6,7 @@ export const VOID = 0,
   FLOOR = 1,
   WALL = 2;
 
-export type RoomKind = 'start' | 'monster' | 'treasure' | 'recruit' | 'spring' | 'exit' | 'boss' | 'junction';
+export type RoomKind = 'start' | 'monster' | 'treasure' | 'armory' | 'gauntlet' | 'recruit' | 'spring' | 'exit' | 'boss' | 'junction';
 
 export interface Room {
   id: number;
@@ -257,6 +257,9 @@ export function generateDungeon(depth: number, boss: boolean, r: RNG): Dungeon {
   const treasureCount = rooms.length >= 10 ? 2 : 1;
   for (let i = 0; i < treasureCount && rest.length > 1; i++) rest.pop()!.kind = 'treasure';
   if (rest.length > 2 && r.chance(0.55)) rest.pop()!.kind = 'spring';
+  // Keep the early floor simple; deeper floors gain a focused gear stop and a risky reward.
+  if (depth >= 2 && rest.length > 2 && r.chance(0.7)) rest.pop()!.kind = 'armory';
+  if (depth >= 4 && rest.length > 2 && r.chance(0.55)) rest.pop()!.kind = 'gauntlet';
 
   return { w, h, tiles, rooms, roomAt, start, exit, boss, edges };
 }

@@ -49,27 +49,37 @@ const BASES: BaseDef[] = [
   { name: 'Cheese Cleaver', icon: 'cleaver', slot: 'weapon', cls: 'vanguard', minLvl: 2 },
   { name: 'Bramble Mace', icon: 'mace', slot: 'weapon', cls: 'vanguard', minLvl: 3 },
   { name: 'Knightly Broadsword', icon: 'sword', slot: 'weapon', cls: 'vanguard', minLvl: 5 },
+  { name: 'Pondkeeper Blade', icon: 'sword', slot: 'weapon', cls: 'vanguard', minLvl: 6 },
   { name: 'Riverstone Hammer', icon: 'mace', slot: 'weapon', cls: 'vanguard', minLvl: 7 },
+  { name: 'Deepstone Maul', icon: 'mace', slot: 'weapon', cls: 'vanguard', minLvl: 10 },
   // ranger
   { name: 'Reed Bow', icon: 'bow', slot: 'weapon', cls: 'ranger', minLvl: 0 },
   { name: 'Mossy Longbow', icon: 'bow', slot: 'weapon', cls: 'ranger', minLvl: 2 },
   { name: "Hunter's Recurve", icon: 'bow', slot: 'weapon', cls: 'ranger', minLvl: 4 },
+  { name: 'Willow Longbow', icon: 'bow', slot: 'weapon', cls: 'ranger', minLvl: 6 },
   { name: 'Elderwood Greatbow', icon: 'bow', slot: 'weapon', cls: 'ranger', minLvl: 7 },
+  { name: 'Moonreed Bow', icon: 'bow', slot: 'weapon', cls: 'ranger', minLvl: 10 },
   // ember
   { name: 'Charred Twig', icon: 'staff', slot: 'weapon', cls: 'ember', minLvl: 0 },
   { name: 'Ember Staff', icon: 'staff', slot: 'weapon', cls: 'ember', minLvl: 2 },
   { name: 'Candlewick Wand', icon: 'staff', slot: 'weapon', cls: 'ember', minLvl: 4 },
+  { name: 'Firefly Lantern', icon: 'staff', slot: 'weapon', cls: 'ember', minLvl: 6 },
   { name: 'Magma Scepter', icon: 'staff', slot: 'weapon', cls: 'ember', minLvl: 7 },
+  { name: 'Cinderheart Staff', icon: 'staff', slot: 'weapon', cls: 'ember', minLvl: 10 },
   // herbalist
   { name: 'Garden Trowel', icon: 'sprig', slot: 'weapon', cls: 'herbalist', minLvl: 0 },
   { name: 'Leafy Sprig', icon: 'sprig', slot: 'weapon', cls: 'herbalist', minLvl: 2 },
   { name: 'Blooming Rod', icon: 'sprig', slot: 'weapon', cls: 'herbalist', minLvl: 4 },
+  { name: 'Golden Marigold', icon: 'sprig', slot: 'weapon', cls: 'herbalist', minLvl: 6 },
   { name: 'Mandarin Scepter', icon: 'sprig', slot: 'weapon', cls: 'herbalist', minLvl: 7 },
+  { name: 'Ancient Lotus', icon: 'sprig', slot: 'weapon', cls: 'herbalist', minLvl: 10 },
   // storm
   { name: 'Pointy Pebbles', icon: 'daggers', slot: 'weapon', cls: 'storm', minLvl: 0 },
   { name: 'Twin Daggers', icon: 'daggers', slot: 'weapon', cls: 'storm', minLvl: 2 },
   { name: 'Spark Knives', icon: 'daggers', slot: 'weapon', cls: 'storm', minLvl: 4 },
+  { name: 'Rainflash Knives', icon: 'daggers', slot: 'weapon', cls: 'storm', minLvl: 6 },
   { name: 'Thunder Fangs', icon: 'daggers', slot: 'weapon', cls: 'storm', minLvl: 7 },
+  { name: 'Stormglass Fangs', icon: 'daggers', slot: 'weapon', cls: 'storm', minLvl: 10 },
   // armour
   { name: 'Leaf Tunic', icon: 'tunic', slot: 'armor', minLvl: 0, heavy: 0 },
   { name: 'Padded Vest', icon: 'tunic', slot: 'armor', minLvl: 1, heavy: 0 },
@@ -77,7 +87,10 @@ const BASES: BaseDef[] = [
   { name: 'Apprentice Robe', icon: 'robe', slot: 'armor', minLvl: 1, heavy: 2 },
   { name: 'Bark Plate', icon: 'plate', slot: 'armor', minLvl: 4, heavy: 1 },
   { name: 'Starweave Robe', icon: 'robe', slot: 'armor', minLvl: 5, heavy: 2 },
+  { name: 'Riverguard Coat', icon: 'tunic', slot: 'armor', minLvl: 6, heavy: 0 },
   { name: "Knight's Cuirass", icon: 'plate', slot: 'armor', minLvl: 7, heavy: 1 },
+  { name: 'Deepwood Hauberk', icon: 'mail', slot: 'armor', minLvl: 9, heavy: 1 },
+  { name: 'Moonmoss Robe', icon: 'robe', slot: 'armor', minLvl: 10, heavy: 2 },
   // charms
   { name: 'Lucky Pebble', icon: 'pebble', slot: 'trinket', minLvl: 0 },
   { name: 'River Charm', icon: 'amulet', slot: 'trinket', minLvl: 0 },
@@ -85,6 +98,9 @@ const BASES: BaseDef[] = [
   { name: 'Pressed Flower', icon: 'flower', slot: 'trinket', minLvl: 1 },
   { name: 'Snail Shell Amulet', icon: 'amulet', slot: 'trinket', minLvl: 3 },
   { name: 'Old Brass Button', icon: 'pebble', slot: 'trinket', minLvl: 4 },
+  { name: 'Glowcap Brooch', icon: 'flower', slot: 'trinket', minLvl: 5 },
+  { name: 'Riverglass Pendant', icon: 'amulet', slot: 'trinket', minLvl: 7 },
+  { name: 'Little Silver Bell', icon: 'bell', slot: 'trinket', minLvl: 9 },
 ];
 
 interface AffixDef {
@@ -238,7 +254,7 @@ export function makeItem(opts: { depth: number; rarity?: number; slot?: Slot; cl
   const slot: Slot = opts.slot ?? rng.weighted(SLOTS, (s) => (s === 'weapon' ? 4 : s === 'armor' ? 3 : 3));
 
   if (rarity === 4) {
-    const pool = LEGENDS.filter((l) => (!opts.slot || l.slot === slot) && (!opts.cls || !l.cls || l.cls === opts.cls));
+    const pool = LEGENDS.filter((l) => l.slot === slot && (!opts.cls || !l.cls || l.cls === opts.cls));
     if (pool.length) {
       const L = rng.pick(pool);
       return {
@@ -262,9 +278,10 @@ export function makeItem(opts: { depth: number; rarity?: number; slot?: Slot; cl
     (a) => a.slots.includes(slot) && (!a.classes || (slot === 'weapon' && cls && a.classes.includes(cls)) || (slot !== 'weapon' && a.classes === undefined)) && (a.minRarity ?? 0) <= rarity,
   );
   const chosen: AffixDef[] = [];
-  for (let i = 0; i < count && pool.length; i++) {
-    const a = rng.weighted(pool, (x) => (chosen.some((c) => c.stat === x.stat) ? 0 : x.weight));
-    if (chosen.some((c) => c.stat === a.stat)) break;
+  for (let i = 0; i < count; i++) {
+    const available = pool.filter((a) => !chosen.some((c) => c.stat === a.stat));
+    if (!available.length) break;
+    const a = rng.weighted(available, (x) => x.weight);
     chosen.push(a);
     mods.push({ stat: a.stat, pct: a.pct, value: rollAffixValue(a, ilvl, rarity) });
   }
